@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>study.sunshine</groupId>
+        <artifactId>demo</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>study.sunshine.dubbo</groupId>
+    <artifactId>springboot-dubbo</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>consumer</module>
+        <module>provider</module>
+        <module>common-api</module>
+    </modules>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <dubbo.version>0.2.0</dubbo.version>
+        <common-api.version>1.0-SNAPSHOT</common-api.version>
+    </properties>
+
+   <dependencies>
+<!--       <dependency>-->
+<!--           <groupId>org.springframework.boot</groupId>-->
+<!--           <artifactId>spring-boot-project</artifactId>-->
+<!--           <version>2.1.14.BUILD-SNAPSHOT</version>-->
+<!--       </dependency>-->
+   </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- springboot整合dubbo所需starter -->
+            <dependency>
+                <groupId>com.alibaba.boot</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>${dubbo.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+
+
+</project>

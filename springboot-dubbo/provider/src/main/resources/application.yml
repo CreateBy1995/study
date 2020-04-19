@@ -1,0 +1,11 @@
+server:
+  port: 7002
+dubbo:
+  application:
+    name: dubbo-provider
+  registry:
+    address: 127.0.0.1:2181
+    protocol: zookeeper
+    check: false
+  protocol:
+    port: 17002
