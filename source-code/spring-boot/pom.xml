@@ -55,7 +55,6 @@
 								<id>checkstyle-validation</id>
 								<phase>validate</phase>
 								<configuration>
-									<skip>${disable.checks}</skip>
 									<configLocation>src/checkstyle/checkstyle.xml</configLocation>
 									<suppressionsLocation>src/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
 									<includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -70,7 +69,6 @@
 								<id>nohttp-checkstyle-validation</id>
 								<phase>validate</phase>
 								<configuration>
-									<skip>${disable.checks}</skip>
 									<configLocation>src/checkstyle/nohttp-checkstyle.xml</configLocation>
 									<suppressionsLocation>src/checkstyle/nohttp-checkstyle-suppressions.xml</suppressionsLocation>
 									<propertyExpansion>main.basedir=${main.basedir}</propertyExpansion>
@@ -94,7 +92,6 @@
 							<execution>
 								<phase>validate</phase>
 								<configuration>
-									<skip>${disable.checks}</skip>
 								</configuration>
 								<goals>
 									<goal>validate</goal>
@@ -107,8 +104,6 @@
 			<modules>
 				<module>spring-boot-project</module>
 				<!-- Samples are built via the invoker plugin -->
-				<module>spring-boot-samples-invoker</module>
-				<module>spring-boot-tests</module>
 			</modules>
 		</profile>
 		<!-- M2E profile to allow easy import into Eclipse -->
@@ -121,8 +116,6 @@
 			</activation>
 			<modules>
 				<module>spring-boot-project</module>
-				<module>spring-boot-samples</module>
-				<module>spring-boot-tests</module>
 			</modules>
 		</profile>
 		<profile>

@@ -12,4 +12,7 @@
     <groupId>study.sunshine</groupId>
     <artifactId>source-code</artifactId>
     <packaging>pom</packaging>
+    <modules>
+        <module>dubbo</module>
+    </modules>
 </project>

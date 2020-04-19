@@ -7,10 +7,16 @@
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/source-code/spring-boot/pom.xml" />
         <option value="$PROJECT_DIR$/source-code/pom.xml" />
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo-spring-boot-starter/pom.xml" />
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo/distribution/pom.xml" />
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo/dubbo-demo/pom.xml" />
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo/dubbo-plugin/pom.xml" />
+        <option value="$PROJECT_DIR$/source-code/dubbo/dubbo/dubbo-test/pom.xml" />
         <option value="$PROJECT_DIR$/source-code/spring-boot/spring-boot-samples-invoker/pom.xml" />
         <option value="$PROJECT_DIR$/source-code/spring-boot/spring-boot-tests/pom.xml" />
         <option value="$PROJECT_DIR$/source-code/springboot/pom.xml" />

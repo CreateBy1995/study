@@ -6,86 +6,145 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="spring-boot-test" />
-        <module name="spring-boot-starter-thymeleaf" />
-        <module name="spring-boot-starter-jersey" />
-        <module name="spring-boot-starter-data-mongodb-reactive" />
         <module name="spring-boot-test-support" />
-        <module name="spring-boot-starter-data-jpa" />
-        <module name="spring-boot-configuration-processor-tests" />
-        <module name="spring-boot-starter-security" />
-        <module name="spring-boot-starter-mustache" />
-        <module name="spring-boot-starter-jta-atomikos" />
-        <module name="spring-boot-starter-undertow" />
-        <module name="spring-boot-starter-batch" />
-        <module name="spring-boot-starter-data-rest" />
-        <module name="spring-boot-starter-reactor-netty" />
-        <module name="spring-boot-starter-websocket" />
-        <module name="spring-boot-starter-web" />
-        <module name="spring-boot-starter-mail" />
-        <module name="spring-boot-starter-artemis" />
-        <module name="spring-boot-starter-data-elasticsearch" />
-        <module name="spring-boot-starter-data-neo4j" />
-        <module name="spring-boot-starter-groovy-templates" />
-        <module name="spring-boot-starter-validation" />
-        <module name="spring-boot-starter-jooq" />
+        <module name="dubbo-config-api" />
         <module name="spring-boot-properties-migrator" />
-        <module name="spring-boot-actuator" />
-        <module name="common-api" />
-        <module name="spring-boot-starter-data-cassandra-reactive" />
-        <module name="spring-boot-starter-integration" />
-        <module name="spring-boot-starter-data-couchbase" />
-        <module name="spring-boot-starter-aop" />
-        <module name="spring-boot-loader" />
-        <module name="spring-boot-cli" />
-        <module name="spring-boot-starter-activemq" />
-        <module name="spring-boot-server-tests" />
-        <module name="spring-boot" />
-        <module name="spring-boot-starter-cloud-connectors" />
-        <module name="spring-boot-starter-data-cassandra" />
-        <module name="spring-boot-maven-plugin" />
-        <module name="spring-boot-starter-web-services" />
-        <module name="spring-boot-starter-data-jdbc" />
-        <module name="spring-boot-starter-jetty" />
-        <module name="spring-boot-starter-tomcat" />
-        <module name="spring-boot-starter-oauth2-resource-server" />
-        <module name="spring-boot-starter" />
-        <module name="spring-boot-test-autoconfigure" />
-        <module name="spring-boot-starter-data-couchbase-reactive" />
-        <module name="spring-boot-starter-amqp" />
-        <module name="spring-boot-starter-data-ldap" />
-        <module name="spring-boot-starter-freemarker" />
-        <module name="spring-boot-actuator-autoconfigure" />
-        <module name="spring-boot-launch-script-tests" />
-        <module name="spring-boot-starter-log4j2" />
-        <module name="spring-boot-starter-jdbc" />
-        <module name="spring-boot-starter-cache" />
-        <module name="provider" />
-        <module name="spring-boot-starter-json" />
-        <module name="spring-boot-starter-logging" />
+        <module name="dubbo-remoting-zookeeper" />
         <module name="spring-boot-loader-tools" />
-        <module name="spring-boot-starter-data-solr" />
-        <module name="spring-boot-starter-hateoas" />
-        <module name="spring-boot-starter-data-mongodb" />
-        <module name="spring-boot-configuration-metadata" />
-        <module name="spring-boot-starter-test" />
-        <module name="spring-boot-docs" />
-        <module name="spring-boot-starter-jta-bitronix" />
-        <module name="spring-boot-starter-data-redis-reactive" />
-        <module name="spring-boot-autoconfigure" />
-        <module name="spring-boot-devtools" />
-        <module name="spring-boot-devtools-tests" />
-        <module name="spring-boot-antlib" />
+        <module name="spring-boot-configuration-processor-tests" />
+        <module name="spring-boot-starter-web-services" />
+        <module name="dubbo-monitor-api" />
+        <module name="dubbo-serialization-jdk" />
+        <module name="dubbo-registry-multicast" />
+        <module name="spring-boot-starter-data-jpa" />
+        <module name="dubbo-registry-redis" />
+        <module name="spring-boot-starter-cloud-connectors" />
         <module name="spring-boot-starter-actuator" />
-        <module name="spring-boot-starter-oauth2-client" />
+        <module name="spring-boot-starter-artemis" />
+        <module name="dubbo-serialization-hessian2" />
+        <module name="dubbo-container-logback" />
+        <module name="spring-boot-starter-jooq" />
+        <module name="dubbo-remoting-netty4" />
+        <module name="dubbo-rpc-rmi" />
+        <module name="spring-boot-starter-data-cassandra-reactive" />
+        <module name="dubbo-rpc-webservice" />
+        <module name="dubbo-config-spring" />
+        <module name="spring-boot-starter-jta-bitronix" />
+        <module name="dubbo-remoting-p2p" />
+        <module name="spring-boot-starter-batch" />
+        <module name="dubbo-rpc-hessian" />
+        <module name="dubbo-remoting-api" />
+        <module name="spring-boot-starter-data-couchbase" />
+        <module name="dubbo-container-log4j" />
+        <module name="spring-boot-launch-script-tests" />
+        <module name="spring-boot-starter-logging" />
+        <module name="spring-boot-starter-websocket" />
+        <module name="spring-boot-starter-groovy-templates" />
+        <module name="spring-boot-starter-freemarker" />
+        <module name="spring-boot-docs" />
+        <module name="spring-boot-starter-data-redis-reactive" />
+        <module name="dubbo" />
+        <module name="spring-boot-actuator-autoconfigure" />
+        <module name="spring-boot-actuator" />
+        <module name="spring-boot" />
+        <module name="dubbo-rpc-rest" />
+        <module name="dubbo-container-api" />
+        <module name="dubbo-cluster" />
         <module name="spring-boot-starter-webflux" />
-        <module name="spring-boot-hibernate52-tests" />
-        <module name="spring-boot-starter-data-redis" />
+        <module name="spring-boot-autoconfigure" />
+        <module name="spring-boot-starter-cache" />
         <module name="consumer" />
+        <module name="spring-boot-starter-jdbc" />
+        <module name="dubbo-remoting-netty" />
+        <module name="spring-boot-starter-mail" />
+        <module name="dubbo-registry-api" />
+        <module name="spring-boot-starter-jta-atomikos" />
+        <module name="spring-boot-cli" />
+        <module name="provider" />
+        <module name="spring-boot-devtools" />
+        <module name="spring-boot-starter-amqp" />
+        <module name="spring-boot-test-autoconfigure" />
+        <module name="dubbo (1) (com.alibaba)" />
+        <module name="spring-boot-antlib" />
+        <module name="spring-boot-starter-data-neo4j" />
+        <module name="dubbo-remoting-http" />
+        <module name="spring-boot-starter-hateoas" />
+        <module name="spring-boot-starter-reactor-netty" />
+        <module name="spring-boot-maven-plugin" />
+        <module name="dubbo-filter-validation" />
+        <module name="spring-boot-starter-data-couchbase-reactive" />
+        <module name="dubbo-filter-cache" />
         <module name="spring-boot-starter-quartz" />
+        <module name="spring-boot-starter-data-mongodb-reactive" />
+        <module name="dubbo-spring-boot-starter" />
+        <module name="spring-boot-starter" />
+        <module name="dubbo-rpc-dubbo" />
+        <module name="spring-boot-starter-json" />
+        <module name="dubbo-serialization-fastjson" />
+        <module name="spring-boot-starter-security" />
+        <module name="spring-boot-starter-data-elasticsearch" />
+        <module name="spring-boot-hibernate52-tests" />
+        <module name="dubbo-serialization-kryo" />
+        <module name="spring-boot-starter-data-mongodb" />
+        <module name="dubbo-registry-default" />
+        <module name="spring-boot-server-tests" />
+        <module name="spring-boot-configuration-metadata" />
+        <module name="dubbo-serialization-fst" />
+        <module name="spring-boot-starter-tomcat" />
+        <module name="spring-boot-starter-undertow" />
+        <module name="spring-boot-starter-integration" />
+        <module name="dubbo-rpc-memcached" />
+        <module name="common-api" />
+        <module name="spring-boot-starter-log4j2" />
+        <module name="dubbo-rpc-http" />
+        <module name="spring-boot-starter-data-rest" />
+        <module name="spring-boot-starter-data-redis" />
+        <module name="dubbo-rpc-api" />
+        <module name="spring-boot-starter-jersey" />
+        <module name="dubbo-rpc-redis" />
+        <module name="dubbo-container-spring" />
+        <module name="spring-boot-starter-jetty" />
+        <module name="spring-boot-devtools-tests" />
+        <module name="dubbo-registry-nacos" />
+        <module name="spring-boot-starter-web" />
+        <module name="spring-boot-starter-thymeleaf" />
+        <module name="spring-boot-loader" />
+        <module name="spring-boot-starter-oauth2-resource-server" />
+        <module name="dubbo-monitor-default" />
+        <module name="dubbo-registry-zookeeper" />
+        <module name="spring-boot-starter-aop" />
+        <module name="dubbo-common" />
+        <module name="spring-boot-starter-test" />
+        <module name="spring-boot-starter-validation" />
+        <module name="dubbo-serialization-api" />
+        <module name="spring-boot-starter-data-jdbc" />
+        <module name="dubbo-remoting-grizzly" />
+        <module name="dubbo-remoting-mina" />
+        <module name="spring-boot-starter-oauth2-client" />
+        <module name="dubbo-rpc-injvm" />
+        <module name="spring-boot-starter-mustache" />
+        <module name="spring-boot-test" />
+        <module name="spring-boot-starter-data-ldap" />
+        <module name="spring-boot-starter-data-solr" />
+        <module name="spring-boot-starter-activemq" />
+        <module name="spring-boot-starter-data-cassandra" />
+        <module name="dubbo-rpc-thrift" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="dubbo-demo" target="1.6" />
+      <module name="dubbo-demo-api" target="1.6" />
+      <module name="dubbo-demo-consumer" target="1.6" />
+      <module name="dubbo-demo-provider" target="1.6" />
+      <module name="dubbo-distribution" target="1.6" />
+      <module name="dubbo-plugin" target="1.6" />
+      <module name="dubbo-qos" target="1.6" />
+      <module name="dubbo-test" target="1.6" />
+      <module name="dubbo-test-benchmark" target="1.6" />
+      <module name="dubbo-test-compatibility" target="1.6" />
+      <module name="dubbo-test-examples" target="1.6" />
+      <module name="dubbo-test-integration" target="1.6" />
+      <module name="dubbo-test-spring3" target="1.6" />
       <module name="spring-boot-configuration-processor-tests" target="1.8" />
       <module name="spring-boot-devtools-tests" target="1.8" />
       <module name="spring-boot-hibernate52-tests" target="1.8" />
@@ -101,6 +160,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="common-api" options="-parameters" />
       <module name="consumer" options="-parameters" />
+      <module name="dubbo" options="-parameters" />
       <module name="provider" options="-parameters" />
       <module name="source-code" options="-parameters" />
       <module name="spring-boot" options="-parameters" />
