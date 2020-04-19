@@ -64,7 +64,6 @@
         <module name="spring-boot-devtools" />
         <module name="spring-boot-starter-amqp" />
         <module name="spring-boot-test-autoconfigure" />
-        <module name="dubbo (1) (com.alibaba)" />
         <module name="spring-boot-antlib" />
         <module name="spring-boot-starter-data-neo4j" />
         <module name="dubbo-remoting-http" />
@@ -120,6 +119,7 @@
         <module name="spring-boot-starter-data-jdbc" />
         <module name="dubbo-remoting-grizzly" />
         <module name="dubbo-remoting-mina" />
+        <module name="all" />
         <module name="spring-boot-starter-oauth2-client" />
         <module name="dubbo-rpc-injvm" />
         <module name="spring-boot-starter-mustache" />
