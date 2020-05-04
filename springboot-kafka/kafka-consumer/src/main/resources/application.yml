@@ -1,0 +1,12 @@
+server:
+  port: 7002
+spring:
+  kafka:
+    bootstrap-servers: localhost:9093
+    consumer:
+      group-id: testGroup
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: manual
