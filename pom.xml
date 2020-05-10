@@ -19,6 +19,7 @@
         <module>springboot-dubbo</module>
         <module>source-code</module>
         <module>springboot-kafka</module>
+        <module>io</module>
     </modules>
 
     <properties>
