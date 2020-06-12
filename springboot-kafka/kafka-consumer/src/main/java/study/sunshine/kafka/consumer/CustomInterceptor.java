@@ -22,6 +22,7 @@ public class CustomInterceptor implements ProducerInterceptor {
 
     @Override
     public void onAcknowledgement(RecordMetadata metadata, Exception exception) {
+
         log.info("onAcknowledgement");
     }
 

@@ -36,6 +36,7 @@ public class NetManager {
             log.info("server start listen to the port : {}",socketAddress.getPort());
             // 设置为非阻塞模式
             serverSocketChannel.configureBlocking(false);
+            ioThread.start();
             doIO(serverSocketChannel);
         } catch (IOException e) {
             e.printStackTrace();

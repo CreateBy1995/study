@@ -1,8 +1,7 @@
 package study.sunshine.io.nioserver;
 
-import study.sunshine.io.nioserver.server.NioServer;
-
-import java.io.IOException;
+import study.sunshine.io.nioserver.factory.NetFactory;
+import study.sunshine.io.nioserver.server.NetManager;
 
 /**
  * @Author: dongcx
@@ -11,10 +10,7 @@ import java.io.IOException;
  **/
 public class MainApplication {
     public static void main(String[] args) {
-        try {
-            NioServer.initial();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        NetManager netManager = NetFactory.instanceNetManager();
+        netManager.initial();
     }
 }

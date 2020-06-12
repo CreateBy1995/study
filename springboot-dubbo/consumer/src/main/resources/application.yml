@@ -4,6 +4,5 @@ dubbo:
   application:
     name: dubbo-consumer
   registry:
-    address: 127.0.0.1:2181
-    protocol: zookeeper
+    address: zookeeper://127.0.0.1:2181
     check: false

@@ -20,6 +20,8 @@
         <module>source-code</module>
         <module>springboot-kafka</module>
         <module>io</module>
+        <module>common</module>
+        <module>hystrix</module>
     </modules>
 
     <properties>

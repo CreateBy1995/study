@@ -1,9 +1,8 @@
 package study.sunshine.dubbo.provider;
 
-import com.alibaba.dubbo.config.spring.context.annotation.EnableDubbo;
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * @Author: dongcx
@@ -14,7 +13,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 @EnableDubbo
 public class ProviderApplication {
     public static void main(String[] args) {
-        ConfigurableApplicationContext ioc =
-                SpringApplication.run(ProviderApplication.class) ;
+//        TestSpi testSpi =ExtensionLoader.getExtensionLoader(TestSpi.class).getAdaptiveExtension();
+//        System.out.println(testSpi);
+        SpringApplication.run(ProviderApplication.class);
     }
 }

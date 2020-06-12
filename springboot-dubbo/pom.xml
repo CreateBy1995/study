@@ -20,25 +20,42 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <dubbo.version>0.2.0</dubbo.version>
+        <dubbo.version>2.7.5</dubbo.version>
         <common-api.version>1.0-SNAPSHOT</common-api.version>
+        <zkClient.version>2.11.1</zkClient.version>
     </properties>
 
    <dependencies>
-<!--       <dependency>-->
-<!--           <groupId>org.springframework.boot</groupId>-->
-<!--           <artifactId>spring-boot-project</artifactId>-->
-<!--           <version>2.1.14.BUILD-SNAPSHOT</version>-->
-<!--       </dependency>-->
+       <dependency>
+           <groupId>org.projectlombok</groupId>
+           <artifactId>lombok</artifactId>
+       </dependency>
    </dependencies>
 
     <dependencyManagement>
         <dependencies>
-            <!-- springboot整合dubbo所需starter -->
+            <!-- SpringBoot整合Dubbo所需starter -->
             <dependency>
-                <groupId>com.alibaba.boot</groupId>
+                <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-spring-boot-starter</artifactId>
                 <version>${dubbo.version}</version>
+            </dependency>
+            <!-- Dubbo元数据中心所需依赖 -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-metadata-report-zookeeper</artifactId>
+                <version>${dubbo.version}</version>
+            </dependency>
+            <!-- zkClient 2.11.1对应zk3.4.x的服务器版本 -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${zkClient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>${zkClient.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -2,10 +2,13 @@ server:
   port: 7002
 dubbo:
   application:
-    name: dubbo-provider
+    name: dubboProvider
   registry:
-    address: 127.0.0.1:2181
-    protocol: zookeeper
-    check: false
+    address: zookeeper://127.0.0.1:2181
+  consumer:
+    check: true
   protocol:
     port: 17002
+    name: dubbo
+  metadata-report:
+    address: zookeeper://127.0.0.1:2181
