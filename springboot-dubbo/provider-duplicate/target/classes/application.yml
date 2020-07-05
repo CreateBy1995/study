@@ -1,5 +1,5 @@
 server:
-  port: 7002
+  port: 7003
 dubbo:
   application:
     name: dubboProvider
@@ -9,8 +9,7 @@ dubbo:
   consumer:
     check: true
   protocol:
-    port: 17002
+    port: 17003
     name: dubbo
-    threads: 20
   metadata-report:
     address: zookeeper://127.0.0.1:2181

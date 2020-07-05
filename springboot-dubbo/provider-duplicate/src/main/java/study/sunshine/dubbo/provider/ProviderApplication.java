@@ -1,4 +1,4 @@
-package study.sunshine.dubbo.consumer;
+package study.sunshine.dubbo.provider;
 
 import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
@@ -11,8 +11,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  **/
 @SpringBootApplication
 @EnableDubbo
-public class ConsumerApplication {
+public class ProviderApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ConsumerApplication.class) ;
+//        TestSpi testSpi =ExtensionLoader.getExtensionLoader(TestSpiz'k.class).getAdaptiveExtension();
+//        System.out.println(testSpi);
+        SpringApplication.run(ProviderApplication.class);
     }
 }

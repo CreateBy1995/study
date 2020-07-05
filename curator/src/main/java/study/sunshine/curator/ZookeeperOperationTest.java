@@ -1,9 +1,6 @@
 package study.sunshine.curator;
 
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 
 /**
  * @Author: dongcx
@@ -19,8 +16,11 @@ public class ZookeeperOperationTest {
 //        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test");
 //        zookeeperClient.delete().deletingChildrenIfNeeded().forPath("/test1");
         // TODO 创建一个指定类型的节点,名称为test1 初始内容为init
-        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test1", "init".getBytes());
-        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test1/test2","init".getBytes());
+//        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test1", "init".getBytes());
+//        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test1/test2","init".getBytes());
+//        zookeeperClient.create().creatingParentsIfNeeded().forPath("/dubbo/config/dubbo/dubbo.properties");
+        zookeeperClient.setData().forPath("/dubbo/config/dubbo/dubbo.properties","dubbo.metadata-report.address=zookeeper://127.0.0.1:2181\ndubbo.registry.address=zookeeper://127.0.0.1:2181".getBytes());
+//        zookeeperClient.setData().forPath("/dubbo/config/dubbo/dubbo.properties","sdfdsfsf".getBytes());
 //        // TODO 删除一个节点，只能删除叶子节点 否则抛出异常
 //        zookeeperClient.delete().forPath("/test1");
         // TODO 递归删除指定节点及其子节点
@@ -57,18 +57,18 @@ public class ZookeeperOperationTest {
 //        zookeeperClient.setData().forPath("/test1", "6666".getBytes());
 //        Thread.sleep(5000);
         // TODO 只有子节点被创建或者删除才能触发
-        zookeeperClient.getChildren().usingWatcher(new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                System.out.println("触发监听，事件为: "+event.getType()+" 节点为: "+event.getPath());
-            }
-        }).forPath("/test1");
-        Thread.sleep(200);
-//        zookeeperClient.setData().forPath("/test1/test2","init2222".getBytes());
-//        zookeeperClient.delete().forPath("/test1/test2");
+//        zookeeperClient.getChildren().usingWatcher(new Watcher() {
+//            @Override
+//            public void process(WatchedEvent event) {
+//                System.out.println("触发监听，事件为: "+event.getType()+" 节点为: "+event.getPath());
+//            }
+//        }).forPath("/test1");
 //        Thread.sleep(200);
-        zookeeperClient.create().withMode(CreateMode.EPHEMERAL).forPath("/test1/test3","init".getBytes());
-        Thread.sleep(2000);
+////        zookeeperClient.setData().forPath("/test1/test2","init2222".getBytes());
+////        zookeeperClient.delete().forPath("/test1/test2");
+////        Thread.sleep(200);
+//        zookeeperClient.create().withMode(CreateMode.EPHEMERAL).forPath("/test1/test3","init".getBytes());
+//        Thread.sleep(2000);
 
     }
 

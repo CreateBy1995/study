@@ -22,6 +22,8 @@
         <module>io</module>
         <module>common</module>
         <module>hystrix</module>
+        <module>curator</module>
+        <module>concurrent</module>
     </modules>
 
     <properties>
