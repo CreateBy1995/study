@@ -12,6 +12,7 @@ import study.sunshine.dubbo.commonapi.api.ProviderApi;
 public class ProviderApiImpl implements ProviderApi {
     @Override
     public String getVersion(String version) {
+        System.out.println("vvvv");
         return "provider " + version;
     }
 

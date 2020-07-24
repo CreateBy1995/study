@@ -1,0 +1,18 @@
+server:
+  port: 7002
+dubbo:
+  config-center:
+    address: zookeeper://127.0.0.1:2181
+  application:
+    name: dubboProvider
+    id: provider1995
+  registry:
+    address: zookeeper://127.0.0.1:2181
+  consumer:
+    check: true
+  protocol:
+    port: 17002
+    name: dubbo
+    threads: 20
+  metadata-report:
+    address: zookeeper://127.0.0.1:2181

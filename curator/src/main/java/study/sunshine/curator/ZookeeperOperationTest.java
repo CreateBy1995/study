@@ -2,6 +2,9 @@ package study.sunshine.curator;
 
 import org.apache.curator.framework.CuratorFramework;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @Author: dongcx
  * @Description:
@@ -11,6 +14,14 @@ public class ZookeeperOperationTest {
     private static CuratorFramework zookeeperClient = ZookeeperClient.getZookeeperClient();
 
     public static void main(String[] args) throws Exception {
+        Set<String> strings = new HashSet<>();
+        strings.add("a");
+        strings.add("b");
+        Set<String> strings2= new HashSet<>();
+        strings2.add("c");
+        strings2.add("a");
+        strings2.removeAll(strings);
+        System.out.println(strings2);
         zookeeperClient.start();
 //        // TODO 创建一个指定类型的节点,名称为test 初始内容为空
 //        zookeeperClient.create().withMode(CreateMode.PERSISTENT).forPath("/test");

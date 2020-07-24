@@ -12,4 +12,9 @@ public class DemoApiMock implements DemoApi {
     public String getMessage(String msg) {
         return "failed to mock";
     }
+
+    @Override
+    public void test() {
+
+    }
 }

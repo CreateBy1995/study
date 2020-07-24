@@ -24,6 +24,7 @@
         <module>hystrix</module>
         <module>curator</module>
         <module>concurrent</module>
+        <module>es</module>
     </modules>
 
     <properties>

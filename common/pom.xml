@@ -16,6 +16,7 @@
         <module>validation</module>
         <module>utils</module>
         <module>future</module>
+        <module>spi</module>
     </modules>
 
 

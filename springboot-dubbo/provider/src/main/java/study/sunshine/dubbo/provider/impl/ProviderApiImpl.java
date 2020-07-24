@@ -8,10 +8,11 @@ import study.sunshine.dubbo.commonapi.api.ProviderApi;
  * @Description:
  * @Date: 2020-06-14
  **/
-@Service(version = "2.0")
+@Service(version = "2.0",timeout = 2567)
 public class ProviderApiImpl implements ProviderApi {
     @Override
     public String getVersion(String version) {
+        System.out.println("vvvvvv");
         return "provider " + version;
     }
 

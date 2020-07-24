@@ -1,5 +1,6 @@
 package study.sunshine.dubbo.consumer.controller;
 
+import org.apache.dubbo.config.annotation.Method;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,17 +17,13 @@ import study.sunshine.dubbo.commonapi.api.ProviderApi;
 @RequestMapping("/consumer")
 public class ConsumerController {
 //    @Reference(version = "1.0",retries = 1,mock = "study.sunshine.dubbo.consumer.mock.DemoApiMock")
-    @Reference(version = "1.0",retries = 1,timeout = 3000)
+    @Reference(version = "1.0",retries = 1,actives = 2,methods = {@Method(name = "getMessage",actives = 15)})
     private DemoApi demoApi ;
     @Reference(version = "2.0")
     private ProviderApi providerApi ;
     @GetMapping("/getMessage")
     public String getMessage(String msg){
-//        for (int i = 0; i < 50; i++) {
-//            new Thread(()->{
-//                demoApi.getMessage(msg);
-//            }).start();
-//        }
+//        demoApi.test();
 //        return null;
         return demoApi.getMessage(msg) ;
     }

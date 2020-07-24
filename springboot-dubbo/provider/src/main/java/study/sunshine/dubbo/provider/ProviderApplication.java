@@ -13,8 +13,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @EnableDubbo
 public class ProviderApplication {
     public static void main(String[] args) {
-//        TestSpi testSpi =ExtensionLoader.getExtensionLoader(TestSpi.class).getAdaptiveExtension();
-//        System.out.println(testSpi);
         SpringApplication.run(ProviderApplication.class);
     }
 }

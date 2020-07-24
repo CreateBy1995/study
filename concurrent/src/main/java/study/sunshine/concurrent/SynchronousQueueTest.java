@@ -35,8 +35,13 @@ public class SynchronousQueueTest {
             });
         }
     }
-
+    public static Integer getI(){
+        System.out.println(10/0);
+        return 5;
+    }
     public static void main(String[] args) throws InterruptedException {
-        test001();
+        int i = getI();
+        System.out.println(i);
+//        test001();
     }
 }

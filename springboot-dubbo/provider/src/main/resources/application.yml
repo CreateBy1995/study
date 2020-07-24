@@ -1,16 +1,29 @@
 server:
   port: 7002
 dubbo:
+  config-center:
+    address: zookeeper://127.0.0.1:2181
   application:
     name: dubboProvider
-    id: nmsl
+    id: provider1995
+    qos-enable: true
+    qos-port: 9527
   registry:
     address: zookeeper://127.0.0.1:2181
   consumer:
     check: true
-  protocol:
-    port: 17002
-    name: dubbo
-    threads: 20
+#  protocol:
+#    port: 17002
+#    name: dubbo
+#    threads: 20
   metadata-report:
     address: zookeeper://127.0.0.1:2181
+  protocols:
+    dubbo:
+      name: dubbo
+      port: 17002
+      threads: 1
+#    rest:
+#      name: rest
+#      port: 27002
+#      server: netty
