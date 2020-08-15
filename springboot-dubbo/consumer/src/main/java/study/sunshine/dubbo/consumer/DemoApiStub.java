@@ -1,28 +1,35 @@
-package study.sunshine.dubbo.provider.impl;
+package study.sunshine.dubbo.consumer;
 
-import org.apache.dubbo.config.annotation.Service;
+import lombok.extern.slf4j.Slf4j;
 import study.sunshine.dubbo.commonapi.api.DemoApi;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: dongcx
  * @Description:
- * @Date: 2020-04-13
+ * @Date: 2020-08-04
  **/
-@Service(version = "1.0",executes = 10,retries = 3,timeout = 1000)
-public class DemoApiImpl implements DemoApi {
+@Slf4j
+public class DemoApiStub implements DemoApi {
+    private DemoApi demoApi;
+
+    public DemoApiStub(DemoApi demoApi) {
+        this.demoApi = demoApi;
+    }
+
     @Override
     public String getMessage(String msg) {
-        System.out.println(Thread.currentThread().getName() +" provider: "+msg);
+        log.info("invoke by stub");
+        String result = null;
         try {
-            TimeUnit.SECONDS.sleep(3);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            result = demoApi.getMessage(msg);
+            System.out.println(result);
+        } catch (Exception e) {
+            log.error("stub invoke occur error",e);
         }
-        return "provider: "+msg ;
+        return result;
     }
 
     @Override

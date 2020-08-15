@@ -8,8 +8,10 @@ dubbo:
     id: provider1995
     qos-enable: true
     qos-port: 9527
+    logger: slf4j
   registry:
     address: zookeeper://127.0.0.1:2181
+    simplified: true
   consumer:
     check: true
 #  protocol:
@@ -22,7 +24,7 @@ dubbo:
     dubbo:
       name: dubbo
       port: 17002
-      threads: 1
+      threads: 20
 #    rest:
 #      name: rest
 #      port: 27002

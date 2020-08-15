@@ -4,25 +4,29 @@ import org.apache.dubbo.config.annotation.Method;
 import org.apache.dubbo.config.annotation.Service;
 import study.sunshine.dubbo.commonapi.api.DemoApi;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @Author: dongcx
  * @Description:
  * @Date: 2020-04-13
+ * //
  **/
-@Service(version = "1.0",group = "ttt",executes = 15, retries = 3, timeout = 5000, actives = 5,methods = {
-        @Method(name = "getMessage", retries = 2,actives = 3)})
+@Service(version = "1.0", executes = 2, retries = 3,
+        timeout = 5000,
+        methods = {
+        @Method(name = "getMessage", retries = 2)})
 public class DemoApiImpl implements DemoApi {
-    public DemoApiImpl(){
-        System.out.println("nmsl nmsl");
-    }
     @Override
     public String getMessage(String msg) {
         System.out.println(Thread.currentThread().getName() + " provider: " + msg);
-//        try {
-//            TimeUnit.SECONDS.sleep(3);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            TimeUnit.MILLISECONDS.sleep(2700);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 //        try {
 //            System.out.println(msg.substring(0, 9999));
 //        } catch (Exception e) {
@@ -37,8 +41,28 @@ public class DemoApiImpl implements DemoApi {
     }
 
     @Override
+    public Map getMap(String msg) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(2700);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public void test() {
         System.out.println("test");
+    }
+
+    @Override
+    public String getAsyncResult() {
+        return "AsyncResult";
+    }
+
+    @Override
+    public CompletableFuture<String> getAsyncResultWithFuture() {
+        return CompletableFuture.supplyAsync(() -> "AsyncResultWithFuture");
     }
 
 }
