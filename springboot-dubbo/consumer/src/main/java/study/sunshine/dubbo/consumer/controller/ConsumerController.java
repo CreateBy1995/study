@@ -21,11 +21,10 @@ import study.sunshine.dubbo.commonapi.api.ProviderApi;
 @RequestMapping("/consumer")
 public class ConsumerController {
     //    @Reference(version = "1.0",retries = 1,mock = "study.sunshine.dubbo.consumer.mock.DemoApiMock")
-    @Reference(version = "1.0", retries = 0, actives = 1,
-            stub = "study.sunshine.dubbo.consumer.DemoApiStub",
-            timeout = 2000,
-            mock = "study.sunshine.dubbo.consumer.mock.DemoApiMock", methods = {
-            @Method(name = "getMessage",retries = 0),
+    @Reference(version = "1.0", retries = 0,
+            timeout = 1000,
+            mock = "default", methods = {
+            @Method(name = "getMessage",actives = 3,retries = 0),
             @Method(name = "getAsyncResult",async = true),
             @Method(name = "getAsyncResultWithFuture",async = true)
     }
@@ -49,7 +48,13 @@ public class ConsumerController {
 //            e.printStackTrace();
 //        }
        ;
-        return demoApi.getMessage(msg);
+//        for (int i = 0; i < 10 ; i++) {
+//            new Thread(()->{
+//                demoApi.getMessage(msg);
+//            }).start();
+//        }
+        demoApi.test();
+        return"ss";
 //        return  demoApi.getMessage(msg);
 //        return demoApi.getMessage(msg);
     }

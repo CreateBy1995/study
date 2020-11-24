@@ -24,16 +24,16 @@ import java.util.List;
  * A compound stat is a stat where a single measurement and associated data structure feeds many metrics. This is the
  * example for a histogram which has many associated percentiles.
  */
-public interface CompoundStat extends Stat {
+public interface CompoundStat extends org.apache.kafka.common.metrics.Stat {
 
     public List<NamedMeasurable> stats();
 
     public static class NamedMeasurable {
 
         private final MetricName name;
-        private final Measurable stat;
+        private final org.apache.kafka.common.metrics.Measurable stat;
 
-        public NamedMeasurable(MetricName name, Measurable stat) {
+        public NamedMeasurable(MetricName name, org.apache.kafka.common.metrics.Measurable stat) {
             super();
             this.name = name;
             this.stat = stat;
@@ -43,7 +43,7 @@ public interface CompoundStat extends Stat {
             return name;
         }
 
-        public Measurable stat() {
+        public org.apache.kafka.common.metrics.Measurable stat() {
             return stat;
         }
 

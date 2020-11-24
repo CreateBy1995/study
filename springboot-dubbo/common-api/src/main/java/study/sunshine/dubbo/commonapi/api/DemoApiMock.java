@@ -1,6 +1,4 @@
-package study.sunshine.dubbo.consumer.mock;
-
-import study.sunshine.dubbo.commonapi.api.DemoApi;
+package study.sunshine.dubbo.commonapi.api;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -8,12 +6,12 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @Author: dongcx
  * @Description:
- * @Date: 2020-07-03
+ * @Date: 2020-09-11
  **/
 public class DemoApiMock implements DemoApi {
     @Override
     public String getMessage(String msg) {
-        return "failed to mock";
+        return null;
     }
 
     @Override
@@ -23,7 +21,7 @@ public class DemoApiMock implements DemoApi {
 
     @Override
     public void test() {
-
+        System.out.println("test mock");
     }
 
     @Override

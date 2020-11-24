@@ -202,8 +202,16 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
      * @return number of fetches sent
      */
     public synchronized int sendFetches() {
+        // 准备fetch请求 (内部会判断,会过滤掉那些之前待响应的fetch请求)
         Map<Node, FetchSessionHandler.FetchRequestData> fetchRequestMap = prepareFetchRequests();
+        // 按照节点发送请求
         for (Map.Entry<Node, FetchSessionHandler.FetchRequestData> entry : fetchRequestMap.entrySet()) {
+            // 构建上一步准备好的fetch请求
+            // maxWaitMs = fetch.max.wait.ms = fetch请求最长等待时间
+            // minBytes = fetch.min.bytes = fetch请求拉取的最少数据量,如果一直达到不数据量则最多等待fetch.max.wait.ms时间
+            // isolationLevel 默认读未提交
+            // metadata通过epoch和sessionId来唯一表示一次请求,初始化时epoch和sessionId都为0
+            // sessionId有服务端分配，epoch会逐次递增
             final Node fetchTarget = entry.getKey();
             final FetchSessionHandler.FetchRequestData data = entry.getValue();
             final FetchRequest.Builder request = FetchRequest.Builder
@@ -215,10 +223,12 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
             if (log.isDebugEnabled()) {
                 log.debug("Sending {} {} to broker {}", isolationLevel, data.toString(), fetchTarget);
             }
+            // 构造fetch请求，将请求入队，并设置回调函数
             client.send(fetchTarget, request)
                     .addListener(new org.apache.kafka.clients.consumer.internals.RequestFutureListener<ClientResponse>() {
                         @Override
                         public void onSuccess(ClientResponse resp) {
+                            // Fetch请求如果成功响应 就将获取到的数据放入到completedFetches中
                             synchronized (Fetcher.this) {
                                 FetchResponse<Records> response = (FetchResponse<Records>) resp.responseBody();
                                 FetchSessionHandler handler = sessionHandler(fetchTarget.id());
@@ -500,12 +510,17 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
         int recordsRemaining = maxPollRecords;
 
         try {
+            // 先将completedFetch解析成nextInLineRecords
+            // 再将nextInLineRecords解析成List<ConsumerRecord> newRecords，也就是要返回的消息列表，直到数量大于max.poll.records
             while (recordsRemaining > 0) {
                 if (nextInLineRecords == null || nextInLineRecords.isFetched) {
+                    // 已完成的fetch请求队列如果为空 则退出循环
                     CompletedFetch completedFetch = completedFetches.peek();
                     if (completedFetch == null) break;
 
                     try {
+                        // 将completedFetch请求解析成PartitionRecords对象
+                        // completedFetch请求可能包含多个分区的消息批次，而nextInLineRecords对应某个分区的消息批次
                         nextInLineRecords = parseCompletedFetch(completedFetch);
                     } catch (Exception e) {
                         // Remove a completedFetch upon a parse with exception if (1) it contains no records, and
@@ -865,7 +880,9 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
 
     private List<TopicPartition> fetchablePartitions() {
         Set<TopicPartition> exclude = new HashSet<>();
+        // 获取可以进行fetch的分区，也就是该消费者被分配的分区
         List<TopicPartition> fetchable = subscriptions.fetchablePartitions();
+        //
         if (nextInLineRecords != null && !nextInLineRecords.isFetched) {
             exclude.add(nextInLineRecords.partition);
         }
@@ -881,22 +898,27 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
      * that have no existing requests in flight.
      */
     private Map<Node, FetchSessionHandler.FetchRequestData> prepareFetchRequests() {
-        // 或者此消费者所分配的分区的元数据信息
+        // 获取此消费者所分配的分区的元数据信息
         Cluster cluster = metadata.fetch();
         Map<Node, FetchSessionHandler.Builder> fetchable = new LinkedHashMap<>();
+        // 获取可以进行fetch请求的分区
         for (TopicPartition partition : fetchablePartitions()) {
+            // 获取leader分区所在的节点
             Node node = cluster.leaderFor(partition);
             if (node == null) {
                 metadata.requestUpdate();
+                // 检查连接是否可用 不可用会抛出异常
             } else if (client.isUnavailable(node)) {
                 client.maybeThrowAuthFailure(node);
 
                 // If we try to send during the reconnect blackout window, then the request is just
                 // going to be failed anyway before being sent, so skip the send for now
                 log.trace("Skipping fetch for partition {} because node {} is awaiting reconnect backoff", partition, node);
+                // 检查对于该节点是否存在未完成的请求
             } else if (client.hasPendingRequests(node)) {
                 log.trace("Skipping fetch for partition {} because there is an in-flight request to {}", partition, node);
             } else {
+                // 上述两个步骤都检查通过  那么就会构造一个fetch请求
                 // if there is a leader and no in-flight requests, issue a new fetch
                 FetchSessionHandler.Builder builder = fetchable.get(node);
                 if (builder == null) {
@@ -935,6 +957,7 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
         Errors error = partition.error;
 
         try {
+            // 如果consumer暂停 或者处于rebalance期间 则忽略这次fetch
             if (!subscriptions.isFetchable(tp)) {
                 // this can happen when a rebalance happened or a partition consumption paused
                 // while fetch is still in-flight
@@ -971,17 +994,17 @@ public class Fetcher<K, V> implements org.apache.kafka.clients.consumer.internal
                             "complete records were found.");
                     }
                 }
-
+                // 记录当前分区HW位置
                 if (partition.highWatermark >= 0) {
                     log.trace("Updating high watermark for partition {} to {}", tp, partition.highWatermark);
                     subscriptions.updateHighWatermark(tp, partition.highWatermark);
                 }
-
+                // 记录分区起始偏移量
                 if (partition.logStartOffset >= 0) {
                     log.trace("Updating log start offset for partition {} to {}", tp, partition.logStartOffset);
                     subscriptions.updateLogStartOffset(tp, partition.logStartOffset);
                 }
-
+                // 记录LSO 事务提交的位置
                 if (partition.lastStableOffset >= 0) {
                     log.trace("Updating last stable offset for partition {} to {}", tp, partition.lastStableOffset);
                     subscriptions.updateLastStableOffset(tp, partition.lastStableOffset);

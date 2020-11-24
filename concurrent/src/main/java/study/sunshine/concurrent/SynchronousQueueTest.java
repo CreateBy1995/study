@@ -35,13 +35,36 @@ public class SynchronousQueueTest {
             });
         }
     }
-    public static Integer getI(){
-        System.out.println(10/0);
-        return 5;
+    public static void test1(){
+        BlockingQueue<String> blockingQueue = new SynchronousQueue<>();
+        blockingQueue.offer("a");
     }
     public static void main(String[] args) throws InterruptedException {
-        int i = getI();
-        System.out.println(i);
+        BlockingQueue<String> blockingQueue = new SynchronousQueue<>();
+        new Thread(()->{
+            try {
+                System.out.println(Thread.currentThread().getName() +" waiting for take");
+                System.out.println(blockingQueue.take());
+                System.out.println(Thread.currentThread().getName() +" end");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        new Thread(()->{
+            try {
+                System.out.println(Thread.currentThread().getName() + " waiting for take");
+                System.out.println(blockingQueue.take());
+                System.out.println(Thread.currentThread().getName() +" end");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        TimeUnit.SECONDS.sleep(2);
+        System.out.println("start offer");
+        blockingQueue.offer("b");
+//        blockingQueue.offer("ba");
+        System.out.println("end offer");
+
 //        test001();
     }
 }

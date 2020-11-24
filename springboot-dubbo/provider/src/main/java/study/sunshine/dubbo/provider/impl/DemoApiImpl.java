@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
  * @Date: 2020-04-13
  * //
  **/
-@Service(version = "1.0", executes = 2, retries = 3,
+@Service(version = "1.0", executes = 2, retries = 3,actives = 3,
         timeout = 5000,
         methods = {
-        @Method(name = "getMessage", retries = 2)})
+        @Method(name = "getMessage", retries = 2,actives = 1)})
 public class DemoApiImpl implements DemoApi {
     @Override
     public String getMessage(String msg) {
@@ -27,16 +27,6 @@ public class DemoApiImpl implements DemoApi {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        try {
-//            System.out.println(msg.substring(0, 9999));
-//        } catch (Exception e) {
-//            msg = null;
-//        }
-//        try {
-//            TimeUnit.SECONDS.sleep(10);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
         return "provider: " + msg;
     }
 

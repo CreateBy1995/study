@@ -265,6 +265,8 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
      */
     @Override
     public boolean ready(Node node, long now) {
+        // 和isReady的区别是  前者判断是否已经连接完毕，而ready则是判断是否可以连接，如果可以则去初始化连接
+        // 相当于使用ready去进行连接，使用isReady判断是否连接完成
         if (node.isEmpty())
             throw new IllegalArgumentException("Cannot connect to empty node " + node);
 
@@ -398,6 +400,12 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
     public boolean isReady(Node node, long now) {
         // if we need to update our metadata now declare all requests unready to make metadata requests first
         // priority
+        // 检测给定节点是否可以发送请求，需要符合下述所有条件
+        // 1.无需更新元数据  默认5分钟更新一次
+        // 2.连接状态为READY
+        // 3.给定节点的InFlightRequest队列元素不能大于maxInFlightRequestsPerConnection,也就是每个连接最大的未收到响应请求数量
+        // (在消费者中maxInFlightRequestsPerConnection固定为100,
+        // 而在生产者中这个参数可配置,生产者中通过max.in.flight.requests.per.connection来配置,从而实现顺序发送)
         return !metadataUpdater.isUpdateDue(now) && canSendRequest(node.idString(), now);
     }
 
@@ -495,11 +503,13 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
                 request,
                 send,
                 now);
+        // 将该请求添加到未响应的请求队列中  (每个节点连接都有一个各自的未完成响应队列,比如客户端和节点1，客户端和节点2)
         this.inFlightRequests.add(inFlightRequest);
         // 放入到对应的brokerID到对应的请求队列中 其实并不是队列 只是将请求放到kafka自定义channel对象中的一个属性上
         // 因为和每一个broker的连接都对应一个kafkaChannel对象
         // 当这个属性不为空时会抛出异常，因为这个属性不为空表示上一个请求还没发送完成，所以需要等到
         // 上一个请求发送完毕才能发送现在的请求，当selector将通道的数据写入到channel后，就会将这个属性置为空，表示请求已经发送完毕
+        // 可以理解为一个长度为1的队列
         selector.send(send);
     }
 
@@ -527,7 +537,7 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
         // 判断下是否需要去kafka上更新下元数据 默认30s(metadata.max.age.ms)一次
         long metadataTimeout = metadataUpdater.maybeUpdate(now);
         try {
-            // 生产者通过channel向kafka写入数据
+            // 执行I/O操作
             this.selector.poll(Utils.min(timeout, metadataTimeout, defaultRequestTimeoutMs));
         } catch (IOException e) {
             log.error("Unexpected error during I/O", e);
@@ -536,13 +546,18 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
         // process completed actions
         long updatedNow = this.time.milliseconds();
         List<org.apache.kafka.clients.ClientResponse> responses = new ArrayList<>();
-        // 如果发送的消息不需要响应，那么在这边会将请求结束
+        // 处理发送完毕的请求
+        // 如果发送的请求不需要响应，那么在这边会将请求完成 (比如在生产者中 ack为0时，则不需要响应)
         handleCompletedSends(responses, updatedNow);
+        // 处理接收到的响应
+        // 将将响应封装成ClientResponse，放入responses列表中
+        // 在completeResponses方法中执行这些响应的回调
         handleCompletedReceives(responses, updatedNow);
         handleDisconnections(responses, updatedNow);
         handleConnections();
         handleInitiateApiVersionRequests(updatedNow);
         handleTimedOutRequests(responses, updatedNow);
+        // 执行响应的回调方法
         completeResponses(responses);
 
         return responses;
@@ -760,6 +775,10 @@ public class NetworkClient implements org.apache.kafka.clients.KafkaClient {
      * @param now The current time
      */
     private void handleCompletedSends(List<org.apache.kafka.clients.ClientResponse> responses, long now) {
+        // 处理已经发送完毕的请求
+        // inFlightRequests表示待响应的请求
+        // completedSends表示已经发送完毕的请求(在selector的poll方法中会将写入通道的请求放在completedSends中)
+        // 此处会取出这些发送完毕的请求，如果这些请求不需要响应则直接将其完成(比如在生产者中 ack为0时，则不需要响应)
         // if no response is expected then when the send is completed, return it
         for (Send send : this.selector.completedSends()) {
             InFlightRequest request = this.inFlightRequests.lastSent(send.destination());

@@ -16,7 +16,6 @@
  */
 package org.apache.kafka.common.network;
 
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -61,7 +60,7 @@ public interface Selectable {
      * Queue the given request for sending in the subsequent {@link #poll(long) poll()} calls
      * @param send The request to send
      */
-    public void send(Send send);
+    public void send(org.apache.kafka.common.network.Send send);
 
     /**
      * Do I/O. Reads, writes, connection establishment, etc.
@@ -73,18 +72,18 @@ public interface Selectable {
     /**
      * The list of sends that completed on the last {@link #poll(long) poll()} call.
      */
-    public List<Send> completedSends();
+    public List<org.apache.kafka.common.network.Send> completedSends();
 
     /**
      * The list of receives that completed on the last {@link #poll(long) poll()} call.
      */
-    public List<NetworkReceive> completedReceives();
+    public List<org.apache.kafka.common.network.NetworkReceive> completedReceives();
 
     /**
      * The connections that finished disconnecting on the last {@link #poll(long) poll()}
      * call. Channel state indicates the local channel state at the time of disconnection.
      */
-    public Map<String, ChannelState> disconnected();
+    public Map<String, org.apache.kafka.common.network.ChannelState> disconnected();
 
     /**
      * The list of connections that completed their connection on the last {@link #poll(long) poll()}

@@ -908,13 +908,13 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
      */
     @Override
     public void subscribe(Collection<String> topics, org.apache.kafka.clients.consumer.ConsumerRebalanceListener listener) {
-        // 对kafkaConsumer对象加锁，防止多个线程同时操作一个consumer
+        // 增加一个轻量锁(将currentThread属性设置当前线程id) 当多线程同时访问时会抛出异常
         acquireAndEnsureOpen();
         try {
             if (topics == null) {
                 throw new IllegalArgumentException("Topic collection to subscribe to cannot be null");
             } else if (topics.isEmpty()) {
-                // 如果订阅的是空主题列表 则取消取消订阅操作
+                // 如果订阅的是空主题列表 则取消订阅操作
                 // treat subscribing to empty topic list as the same as unsubscribing
                 this.unsubscribe();
             } else {
@@ -926,7 +926,8 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
                 throwIfNoAssignorsConfigured();
 
                 log.debug("Subscribed to topic(s): {}", Utils.join(topics, ", "));
-                // 设置一下要订阅的topic
+                // 设置subscription，这是个set对象，存放订阅的topic
+                // 设置rebalance时的监听器
                 this.subscriptions.subscribe(new HashSet<>(topics), listener);
                 metadata.setTopics(subscriptions.groupSubscription());
             }
@@ -1168,14 +1169,17 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
         acquireAndEnsureOpen();
         try {
             if (timeoutMs < 0) throw new IllegalArgumentException("Timeout must not be negative");
-            // 如果消费者尚未订阅主题，则抛出异常
             if (this.subscriptions.hasNoSubscriptionOrUserAssignment()) {
                 throw new IllegalStateException("Consumer is not subscribed to any topics or assigned any partitions");
             }
 
             // poll for new data until the timeout expires
             long elapsedTime = 0L;
+            // 在给定的超时时间内轮询服务器拉取消息
             do {
+                // 安全退出
+                // 一般来说consumer.poll方法都是在一个while(true)中执行，那如果需要让consumer退出，则需要调用consumer.wakeUp方法
+                // 一旦该方法被调用，client.maybeTriggerWakeup就会抛出异常 从而退出while(true)
                 client.maybeTriggerWakeup();
                 final long metadataEnd;
                 // 是否把获取元数据的时间算在超时时间内  默认false
@@ -1189,6 +1193,7 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
                     metadataEnd = time.milliseconds();
                     elapsedTime += metadataEnd - metadataStart;
                 } else {
+                    // 更新元数据
                     while (!updateAssignmentMetadataIfNeeded(Long.MAX_VALUE)) {
                         log.warn("Still waiting for metadata");
                     }
@@ -1196,7 +1201,7 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
                 }
                 // 按照topic和partition去拉取消息
                 final Map<TopicPartition, List<org.apache.kafka.clients.consumer.ConsumerRecord<K, V>>> records = pollForFetches(remainingTimeAtLeastZero(timeoutMs, elapsedTime));
-                // (预拉取)如果拉取的消息不为空 则继续再去拉取下一轮消息，这样下次调用poll方法的时候就可以直接取到消息
+                // (预拉取)如果拉取的消息不为空 并且还有未发送的请求，则继续发送请求去拉取下一轮消息，这样下次调用poll方法的时候就可以直接取到消息
                 if (!records.isEmpty()) {
                     // before returning the fetched records, we can send off the next round of fetches
                     // and avoid block waiting for their responses to enable pipelining while the user
@@ -1226,6 +1231,12 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
      */
     boolean updateAssignmentMetadataIfNeeded(final long timeoutMs) {
         final long startMs = time.milliseconds();
+        // 与组协调器进行交互
+        // 1.确定组协调器
+        // 2.JoinGroup (发起加入群组的请求)
+        // 3.1 onLeader(消费组中的leader进行分区分配，分配好之后会将分配结果发给组协调器,由组协调器发送结果给各个消费者)
+        // 3.2 onFollower(消费组中的follower获取分配的结果)
+        // 4.SyncGroup(将之前分配的结果同步)
         if (!coordinator.poll(timeoutMs)) {
             return false;
         }
@@ -1238,14 +1249,14 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
         long pollTimeout = Math.min(coordinator.timeToNextPoll(startMs), timeoutMs);
 
         // if data is available already, return it immediately
-        // 查看是否有提前获取的数据 如果有则将这些数据返回
+        // 查看是否有上一轮轮询获取到的消息 如果有则将这些消息返回
         final Map<TopicPartition, List<org.apache.kafka.clients.consumer.ConsumerRecord<K, V>>> records = fetcher.fetchedRecords();
         if (!records.isEmpty()) {
             return records;
         }
 
         // send any new fetches (won't resend pending fetches)
-        // 如果没有提前获取的数据  则发送获取数据的请求
+        // 发送新的fetch请求，(内部会判断,不会重新发送那些之前待响应的fetch请求)
         fetcher.sendFetches();
 
         // We do not want to be stuck blocking in poll if we are missing some positions

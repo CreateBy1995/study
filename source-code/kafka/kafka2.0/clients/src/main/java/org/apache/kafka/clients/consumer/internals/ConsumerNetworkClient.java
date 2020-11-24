@@ -98,7 +98,7 @@ public class ConsumerNetworkClient implements Closeable {
     /**
      * Send a request with the default timeout. See {@link #send(Node, AbstractRequest.Builder, int)}.
      */
-    public RequestFuture<ClientResponse> send(Node node, AbstractRequest.Builder<?> requestBuilder) {
+    public org.apache.kafka.clients.consumer.internals.RequestFuture<ClientResponse> send(Node node, AbstractRequest.Builder<?> requestBuilder) {
         return send(node, requestBuilder, requestTimeoutMs);
     }
 
@@ -117,9 +117,9 @@ public class ConsumerNetworkClient implements Closeable {
      *                         for any reason.
      * @return A future which indicates the result of the send.
      */
-    public RequestFuture<ClientResponse> send(Node node,
-                                              AbstractRequest.Builder<?> requestBuilder,
-                                              int requestTimeoutMs) {
+    public org.apache.kafka.clients.consumer.internals.RequestFuture<ClientResponse> send(Node node,
+                                                                                          AbstractRequest.Builder<?> requestBuilder,
+                                                                                          int requestTimeoutMs) {
         long now = time.milliseconds();
         RequestFutureCompletionHandler completionHandler = new RequestFutureCompletionHandler();
         ClientRequest clientRequest = client.newClientRequest(node.idString(), requestBuilder, now, true,
@@ -127,6 +127,7 @@ public class ConsumerNetworkClient implements Closeable {
         unsent.put(node, clientRequest);
 
         // wakeup the client in case it is blocking in poll so that we can send the queued request
+        // 上面的会将待发送的请求放入到unsent中，然后此处会去唤醒客户端，因为可能此时客户端阻塞在轮询过程中
         client.wakeup();
         return completionHandler.future;
     }
@@ -197,7 +198,7 @@ public class ConsumerNetworkClient implements Closeable {
      * @throws WakeupException if {@link #wakeup()} is called from another thread
      * @throws InterruptException if the calling thread is interrupted
      */
-    public void poll(RequestFuture<?> future) {
+    public void poll(org.apache.kafka.clients.consumer.internals.RequestFuture<?> future) {
         while (!future.isDone())
             poll(Long.MAX_VALUE, time.milliseconds(), future);
     }
@@ -210,7 +211,7 @@ public class ConsumerNetworkClient implements Closeable {
      * @throws WakeupException if {@link #wakeup()} is called from another thread
      * @throws InterruptException if the calling thread is interrupted
      */
-    public boolean poll(RequestFuture<?> future, long timeout) {
+    public boolean poll(org.apache.kafka.clients.consumer.internals.RequestFuture<?> future, long timeout) {
         long begin = time.milliseconds();
         long remaining = timeout;
         long now = begin;
@@ -250,6 +251,7 @@ public class ConsumerNetworkClient implements Closeable {
      */
     public void poll(long timeout, long now, PollCondition pollCondition, boolean disableWakeup) {
         // there may be handlers which need to be invoked if we woke up the previous call to poll
+        // 进行读写请求之前 先处理待完成请求 (pendingCompletion队列中存放待完成请求，也就是服务端的响应都放在这个队列中)
         firePendingCompletedRequests();
 
         lock.lock();
@@ -257,7 +259,7 @@ public class ConsumerNetworkClient implements Closeable {
             // Handle async disconnects prior to attempting any sends
             handlePendingDisconnects();
 
-            // send all the requests we can send now
+            // 发送之前放到unsent中的请求
             long pollDelayMs = trySend(now);
             timeout = Math.min(timeout, pollDelayMs);
 
@@ -563,12 +565,12 @@ public class ConsumerNetworkClient implements Closeable {
     }
 
     private class RequestFutureCompletionHandler implements RequestCompletionHandler {
-        private final RequestFuture<ClientResponse> future;
+        private final org.apache.kafka.clients.consumer.internals.RequestFuture<ClientResponse> future;
         private ClientResponse response;
         private RuntimeException e;
 
         private RequestFutureCompletionHandler() {
-            this.future = new RequestFuture<>();
+            this.future = new org.apache.kafka.clients.consumer.internals.RequestFuture<>();
         }
 
         public void fireCompletion() {

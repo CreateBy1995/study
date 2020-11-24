@@ -9,23 +9,13 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>lambdaAndFunc</module>
-        <module>validation</module>
-        <module>utils</module>
-        <module>future</module>
-        <module>spi</module>
-        <module>design-patterns</module>
-    </modules>
+    <artifactId>algorithm</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
         </dependency>
     </dependencies>
-
 </project>

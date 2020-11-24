@@ -104,10 +104,10 @@ public abstract class AbstractCoordinator implements Closeable {
     private final int sessionTimeoutMs;
     private final boolean leaveGroupOnClose;
     private final GroupCoordinatorMetrics sensors;
-    private final Heartbeat heartbeat;
+    private final org.apache.kafka.clients.consumer.internals.Heartbeat heartbeat;
     protected final int rebalanceTimeoutMs;
     protected final String groupId;
-    protected final ConsumerNetworkClient client;
+    protected final org.apache.kafka.clients.consumer.internals.ConsumerNetworkClient client;
     protected final Time time;
     protected final long retryBackoffMs;
 
@@ -115,21 +115,21 @@ public abstract class AbstractCoordinator implements Closeable {
     private boolean rejoinNeeded = true;
     private boolean needsJoinPrepare = true;
     private MemberState state = MemberState.UNJOINED;
-    private RequestFuture<ByteBuffer> joinFuture = null;
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> joinFuture = null;
     private Node coordinator = null;
     private Generation generation = Generation.NO_GENERATION;
 
-    private RequestFuture<Void> findCoordinatorFuture = null;
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<Void> findCoordinatorFuture = null;
     
     /**
      * Initialize the coordination manager.
      */
     public AbstractCoordinator(LogContext logContext,
-                               ConsumerNetworkClient client,
+                               org.apache.kafka.clients.consumer.internals.ConsumerNetworkClient client,
                                String groupId,
                                int rebalanceTimeoutMs,
                                int sessionTimeoutMs,
-                               Heartbeat heartbeat,
+                               org.apache.kafka.clients.consumer.internals.Heartbeat heartbeat,
                                Metrics metrics,
                                String metricGrpPrefix,
                                Time time,
@@ -148,7 +148,7 @@ public abstract class AbstractCoordinator implements Closeable {
     }
 
     public AbstractCoordinator(LogContext logContext,
-                               ConsumerNetworkClient client,
+                               org.apache.kafka.clients.consumer.internals.ConsumerNetworkClient client,
                                String groupId,
                                int rebalanceTimeoutMs,
                                int sessionTimeoutMs,
@@ -159,7 +159,7 @@ public abstract class AbstractCoordinator implements Closeable {
                                long retryBackoffMs,
                                boolean leaveGroupOnClose) {
         this(logContext, client, groupId, rebalanceTimeoutMs, sessionTimeoutMs,
-                new Heartbeat(sessionTimeoutMs, heartbeatIntervalMs, rebalanceTimeoutMs, retryBackoffMs),
+                new org.apache.kafka.clients.consumer.internals.Heartbeat(sessionTimeoutMs, heartbeatIntervalMs, rebalanceTimeoutMs, retryBackoffMs),
                 metrics, metricGrpPrefix, time, retryBackoffMs, leaveGroupOnClose);
     }
 
@@ -226,13 +226,14 @@ public abstract class AbstractCoordinator implements Closeable {
         long elapsedTime = 0L;
 
         while (coordinatorUnknown()) {
-            final RequestFuture<Void> future = lookupCoordinator();
+            final org.apache.kafka.clients.consumer.internals.RequestFuture<Void> future = lookupCoordinator();
             client.poll(future, remainingTimeAtLeastZero(timeoutMs, elapsedTime));
             if (!future.isDone()) {
                 // ran out of time
                 break;
             }
-
+            // 如果获取组协调器的请求失败了，并且是可重试异常(超时异常)，那么就会重新进入循环
+            // 如果是不可重试异常 则直接抛出
             if (future.failed()) {
                 if (future.isRetriable()) {
                     elapsedTime = time.milliseconds() - startTimeMs;
@@ -257,13 +258,13 @@ public abstract class AbstractCoordinator implements Closeable {
         return !coordinatorUnknown();
     }
 
-    protected synchronized RequestFuture<Void> lookupCoordinator() {
+    protected synchronized org.apache.kafka.clients.consumer.internals.RequestFuture<Void> lookupCoordinator() {
         if (findCoordinatorFuture == null) {
-            // find a node to ask about the coordinator
+            // 寻找一个节点负载最低的发起请求
             Node node = this.client.leastLoadedNode();
             if (node == null) {
                 log.debug("No broker available to send FindCoordinator request");
-                return RequestFuture.noBrokersAvailable();
+                return org.apache.kafka.clients.consumer.internals.RequestFuture.noBrokersAvailable();
             } else
                 findCoordinatorFuture = sendFindCoordinatorRequest(node);
         }
@@ -341,14 +342,16 @@ public abstract class AbstractCoordinator implements Closeable {
     boolean ensureActiveGroup(long timeoutMs, long startMs) {
         // always ensure that the coordinator is ready because we may have been disconnected
         // when sending heartbeats and does not necessarily require us to rejoin the group.
+        // 获取对应的组协调器
         if (!ensureCoordinatorReady(timeoutMs)) {
             return false;
         }
-
+        // 开启心跳线程 (等到加入群组之后才会开始发送心跳包)
         startHeartbeatThreadIfNeeded();
 
         long joinStartMs = time.milliseconds();
         long joinTimeoutMs = remainingTimeAtLeastZero(timeoutMs, joinStartMs - startMs);
+        // 发起加入群组的请求
         return joinGroupIfNeeded(joinTimeoutMs, joinStartMs);
     }
 
@@ -405,11 +408,13 @@ public abstract class AbstractCoordinator implements Closeable {
             // refresh which changes the matched subscription set) can occur while another rebalance is
             // still in progress.
             if (needsJoinPrepare) {
+                // 重新加入群组之前的前置操作
                 onJoinPrepare(generation.generationId, generation.memberId);
                 needsJoinPrepare = false;
             }
-
-            final RequestFuture<ByteBuffer> future = initiateJoinGroup();
+            // 初始化一个加入群组的请求
+            final org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> future = initiateJoinGroup();
+            // 请求发送
             client.poll(future, remainingTimeAtLeastZero(timeoutMs, elapsedTime));
             if (!future.isDone()) {
                 // we ran out of time
@@ -452,19 +457,25 @@ public abstract class AbstractCoordinator implements Closeable {
         this.joinFuture = null;
     }
 
-    private synchronized RequestFuture<ByteBuffer> initiateJoinGroup() {
+    private synchronized org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> initiateJoinGroup() {
         // we store the join future in case we are woken up by the user after beginning the
         // rebalance in the call to poll below. This ensures that we do not mistakenly attempt
         // to rejoin before the pending rebalance has completed.
+        // 还未发送加入群组的请求
         if (joinFuture == null) {
             // fence off the heartbeat thread explicitly so that it cannot interfere with the join group.
             // Note that this must come after the call to onJoinPrepare since we must be able to continue
             // sending heartbeats if that callback takes some time.
+            // 禁用心跳线程
             disableHeartbeatThread();
-
+            // 修改消费者状态
+            //  UNJOINED 尚未加入群组
+            //  REBALANCING, 正在执行rebalance
+            //  STABLE 已经加入群组
             state = MemberState.REBALANCING;
+            // 发送加入群组的请求
             joinFuture = sendJoinGroupRequest();
-            joinFuture.addListener(new RequestFutureListener<ByteBuffer>() {
+            joinFuture.addListener(new org.apache.kafka.clients.consumer.internals.RequestFutureListener<ByteBuffer>() {
                 @Override
                 public void onSuccess(ByteBuffer value) {
                     // handle join completion in the callback so that the callback will be invoked
@@ -501,9 +512,9 @@ public abstract class AbstractCoordinator implements Closeable {
      *
      * @return A request future which wraps the assignment returned from the group leader
      */
-    RequestFuture<ByteBuffer> sendJoinGroupRequest() {
+    org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> sendJoinGroupRequest() {
         if (coordinatorUnknown())
-            return RequestFuture.coordinatorNotAvailable();
+            return org.apache.kafka.clients.consumer.internals.RequestFuture.coordinatorNotAvailable();
 
         // send a join group request to the coordinator
         log.info("(Re-)joining group");
@@ -518,7 +529,7 @@ public abstract class AbstractCoordinator implements Closeable {
 
         // Note that we override the request timeout using the rebalance timeout since that is the
         // maximum time that it may block on the coordinator. We add an extra 5 seconds for small delays.
-
+        // 会在max.poll.interval.ms的基础上再加5s 来作为加入群组请求的超时时间
         int joinGroupTimeoutMs = Math.max(rebalanceTimeoutMs, rebalanceTimeoutMs + 5000);
         return client.send(coordinator, requestBuilder, joinGroupTimeoutMs)
                 .compose(new JoinGroupResponseHandler());
@@ -526,7 +537,7 @@ public abstract class AbstractCoordinator implements Closeable {
 
     private class JoinGroupResponseHandler extends CoordinatorResponseHandler<JoinGroupResponse, ByteBuffer> {
         @Override
-        public void handle(JoinGroupResponse joinResponse, RequestFuture<ByteBuffer> future) {
+        public void handle(JoinGroupResponse joinResponse, org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> future) {
             Errors error = joinResponse.error();
             if (error == Errors.NONE) {
                 log.debug("Received successful JoinGroup response: {}", joinResponse);
@@ -577,7 +588,7 @@ public abstract class AbstractCoordinator implements Closeable {
         }
     }
 
-    private RequestFuture<ByteBuffer> onJoinFollower() {
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> onJoinFollower() {
         // send follower's sync group with an empty assignment
         SyncGroupRequest.Builder requestBuilder =
                 new SyncGroupRequest.Builder(groupId, generation.generationId, generation.memberId,
@@ -586,7 +597,7 @@ public abstract class AbstractCoordinator implements Closeable {
         return sendSyncGroupRequest(requestBuilder);
     }
 
-    private RequestFuture<ByteBuffer> onJoinLeader(JoinGroupResponse joinResponse) {
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> onJoinLeader(JoinGroupResponse joinResponse) {
         try {
             // perform the leader synchronization and send back the assignment for the group
             Map<String, ByteBuffer> groupAssignment = performAssignment(joinResponse.leaderId(), joinResponse.groupProtocol(),
@@ -597,13 +608,13 @@ public abstract class AbstractCoordinator implements Closeable {
             log.debug("Sending leader SyncGroup to coordinator {}: {}", this.coordinator, requestBuilder);
             return sendSyncGroupRequest(requestBuilder);
         } catch (RuntimeException e) {
-            return RequestFuture.failure(e);
+            return org.apache.kafka.clients.consumer.internals.RequestFuture.failure(e);
         }
     }
 
-    private RequestFuture<ByteBuffer> sendSyncGroupRequest(SyncGroupRequest.Builder requestBuilder) {
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> sendSyncGroupRequest(SyncGroupRequest.Builder requestBuilder) {
         if (coordinatorUnknown())
-            return RequestFuture.coordinatorNotAvailable();
+            return org.apache.kafka.clients.consumer.internals.RequestFuture.coordinatorNotAvailable();
         return client.send(coordinator, requestBuilder)
                 .compose(new SyncGroupResponseHandler());
     }
@@ -611,7 +622,7 @@ public abstract class AbstractCoordinator implements Closeable {
     private class SyncGroupResponseHandler extends CoordinatorResponseHandler<SyncGroupResponse, ByteBuffer> {
         @Override
         public void handle(SyncGroupResponse syncResponse,
-                           RequestFuture<ByteBuffer> future) {
+                           org.apache.kafka.clients.consumer.internals.RequestFuture<ByteBuffer> future) {
             Errors error = syncResponse.error();
             if (error == Errors.NONE) {
                 sensors.syncLatency.record(response.requestLatencyMs());
@@ -646,7 +657,7 @@ public abstract class AbstractCoordinator implements Closeable {
      * one of the brokers. The returned future should be polled to get the result of the request.
      * @return A request future which indicates the completion of the metadata request
      */
-    private RequestFuture<Void> sendFindCoordinatorRequest(Node node) {
+    private org.apache.kafka.clients.consumer.internals.RequestFuture<Void> sendFindCoordinatorRequest(Node node) {
         // initiate the group metadata request
         log.debug("Sending FindCoordinator request to broker {}", node);
         FindCoordinatorRequest.Builder requestBuilder =
@@ -655,10 +666,10 @@ public abstract class AbstractCoordinator implements Closeable {
                      .compose(new FindCoordinatorResponseHandler());
     }
 
-    private class FindCoordinatorResponseHandler extends RequestFutureAdapter<ClientResponse, Void> {
+    private class FindCoordinatorResponseHandler extends org.apache.kafka.clients.consumer.internals.RequestFutureAdapter<ClientResponse, Void> {
 
         @Override
-        public void onSuccess(ClientResponse resp, RequestFuture<Void> future) {
+        public void onSuccess(ClientResponse resp, org.apache.kafka.clients.consumer.internals.RequestFuture<Void> future) {
             log.debug("Received FindCoordinator response {}", resp);
             clearFindCoordinatorFuture();
 
@@ -688,7 +699,7 @@ public abstract class AbstractCoordinator implements Closeable {
         }
 
         @Override
-        public void onFailure(RuntimeException e, RequestFuture<Void> future) {
+        public void onFailure(RuntimeException e, org.apache.kafka.clients.consumer.internals.RequestFuture<Void> future) {
             clearFindCoordinatorFuture();
             super.onFailure(e, future);
         }
@@ -816,7 +827,7 @@ public abstract class AbstractCoordinator implements Closeable {
 
     private class LeaveGroupResponseHandler extends CoordinatorResponseHandler<LeaveGroupResponse, Void> {
         @Override
-        public void handle(LeaveGroupResponse leaveResponse, RequestFuture<Void> future) {
+        public void handle(LeaveGroupResponse leaveResponse, org.apache.kafka.clients.consumer.internals.RequestFuture<Void> future) {
             Errors error = leaveResponse.error();
             if (error == Errors.NONE) {
                 log.debug("LeaveGroup request returned successfully");
@@ -829,7 +840,7 @@ public abstract class AbstractCoordinator implements Closeable {
     }
 
     // visible for testing
-    synchronized RequestFuture<Void> sendHeartbeatRequest() {
+    synchronized org.apache.kafka.clients.consumer.internals.RequestFuture<Void> sendHeartbeatRequest() {
         log.debug("Sending Heartbeat request to coordinator {}", coordinator);
         HeartbeatRequest.Builder requestBuilder =
                 new HeartbeatRequest.Builder(this.groupId, this.generation.generationId, this.generation.memberId);
@@ -839,7 +850,7 @@ public abstract class AbstractCoordinator implements Closeable {
 
     private class HeartbeatResponseHandler extends CoordinatorResponseHandler<HeartbeatResponse, Void> {
         @Override
-        public void handle(HeartbeatResponse heartbeatResponse, RequestFuture<Void> future) {
+        public void handle(HeartbeatResponse heartbeatResponse, org.apache.kafka.clients.consumer.internals.RequestFuture<Void> future) {
             sensors.heartbeatLatency.record(response.requestLatencyMs());
             Errors error = heartbeatResponse.error();
             if (error == Errors.NONE) {
@@ -871,13 +882,13 @@ public abstract class AbstractCoordinator implements Closeable {
         }
     }
 
-    protected abstract class CoordinatorResponseHandler<R, T> extends RequestFutureAdapter<ClientResponse, T> {
+    protected abstract class CoordinatorResponseHandler<R, T> extends org.apache.kafka.clients.consumer.internals.RequestFutureAdapter<ClientResponse, T> {
         protected ClientResponse response;
 
-        public abstract void handle(R response, RequestFuture<T> future);
+        public abstract void handle(R response, org.apache.kafka.clients.consumer.internals.RequestFuture<T> future);
 
         @Override
-        public void onFailure(RuntimeException e, RequestFuture<T> future) {
+        public void onFailure(RuntimeException e, org.apache.kafka.clients.consumer.internals.RequestFuture<T> future) {
             // mark the coordinator as dead
             if (e instanceof DisconnectException) {
                 markCoordinatorUnknown(true);
@@ -887,7 +898,7 @@ public abstract class AbstractCoordinator implements Closeable {
 
         @Override
         @SuppressWarnings("unchecked")
-        public void onSuccess(ClientResponse clientResponse, RequestFuture<T> future) {
+        public void onSuccess(ClientResponse clientResponse, org.apache.kafka.clients.consumer.internals.RequestFuture<T> future) {
             try {
                 this.response = clientResponse;
                 R responseObj = (R) clientResponse.responseBody();
@@ -1004,12 +1015,18 @@ public abstract class AbstractCoordinator implements Closeable {
                     synchronized (AbstractCoordinator.this) {
                         if (closed)
                             return;
-
+                        // 当消费者协调器 (ConsumerCoordinator,存在于消费者端) 向组协调器 (GroupCoordinator,存在于服务端)
+                        // 获取到最新的元数据之后(也就是消费者加入群组之后)
+                        // 会将enabled置为true,此时心跳线程开始和组协调器进行交互
                         if (!enabled) {
                             AbstractCoordinator.this.wait();
                             continue;
                         }
-
+                        // 如果状态不是稳定状态  则将enabled置为false 直到状态趋于稳定
+                        // MemberState状态分为3种
+                        // 1、UNJOINED 尚未加入组
+                        // 2、REBALANCING  处于重新平衡状态
+                        // 3、STABLE 稳定状态
                         if (state != MemberState.STABLE) {
                             // the group is not stable (perhaps because we left the group or because the coordinator
                             // kicked us out), so disable heartbeats and wait for the main thread to rejoin.
@@ -1025,22 +1042,34 @@ public abstract class AbstractCoordinator implements Closeable {
                                 // the immediate future check ensures that we backoff properly in the case that no
                                 // brokers are available to connect to.
                                 AbstractCoordinator.this.wait(retryBackoffMs);
+                        // 如果上次接收到心跳包的距离现在的时间超过session.timeout.ms
+                        // 那么就会将群组协调器coordinator置为null(coordinator为一个Node对象 表示群组协调器所在节点)
+                        // 并且会将该节点放入到pendingDisconnects中(pendingDisconnects是一个队列，存放等待断开的连接)
+                        // 客户端再次去发送请求之前 都会先与这个队列中的节点一一断开连接
                         } else if (heartbeat.sessionTimeoutExpired(now)) {
                             // the session timeout has expired without seeing a successful heartbeat, so we should
                             // probably make sure the coordinator is still healthy.
                             markCoordinatorUnknown();
+                        // 如果上次进行轮询时间距离现在超过max.poll.interval.ms
+                        // 那么就会发送一个离开群组的请求到服务端 并且将MemberState置为UNJOINED
                         } else if (heartbeat.pollTimeoutExpired(now)) {
                             // the poll timeout has expired, which means that the foreground thread has stalled
                             // in between calls to poll(), so we explicitly leave the group.
                             maybeLeaveGroup();
+                        // 1、如果上一次心跳包发送是成功的，那么上次发送心跳包的时间距离现在需要大于heartbeat.interval.ms
+                        // 才会再次发送，(也就是执行下面的heartbeat.sentHeartbeat(now))
+                        // 2、如果上一次心跳包发送是失败的,那么上次发送心跳包的时间距离现在只需要大于retry.backoff.ms就可以再次发送
                         } else if (!heartbeat.shouldHeartbeat(now)) {
                             // poll again after waiting for the retry backoff in case the heartbeat failed or the
                             // coordinator disconnected
+                            // 如果没有符合上面说的两个条件 那么线程会挂起一定时间再重新开始循环(retry.backoff.ms)
+                            // 或者说心跳请求发送失败的回调函数里面会唤醒线程  AbstractCoordinator.this.notify();
                             AbstractCoordinator.this.wait(retryBackoffMs);
                         } else {
+                            // 发送心跳包 在这个方法中会将lastHeartbeatSend(上一次发送心跳包的时间)更新当前时间
                             heartbeat.sentHeartbeat(now);
 
-                            sendHeartbeatRequest().addListener(new RequestFutureListener<Void>() {
+                            sendHeartbeatRequest().addListener(new org.apache.kafka.clients.consumer.internals.RequestFutureListener<Void>() {
                                 @Override
                                 public void onSuccess(Void value) {
                                     synchronized (AbstractCoordinator.this) {
@@ -1056,11 +1085,16 @@ public abstract class AbstractCoordinator implements Closeable {
                                             // ensures that the coordinator keeps the member in the group for as long
                                             // as the duration of the rebalance timeout. If we stop sending heartbeats,
                                             // however, then the session timeout may expire before we can rejoin.
+                                            // 如果接收到的异常是服务端正在重新平衡的异常，那么此处还是会将上次接收到心跳包的时间(lastHeartbeatReceive)
+                                            // 更新为当前时间 这是为了不使seesion超时
+                                            // (因为session是否超时就是通过判断上次接收到心跳包距离现在的时间是否超过session.timeout.ms)
                                             heartbeat.receiveHeartbeat(time.milliseconds());
                                         } else {
+                                            // 将心跳包发送状态置为失败
                                             heartbeat.failHeartbeat();
 
                                             // wake up the thread if it's sleeping to reschedule the heartbeat
+                                            // 唤醒上面的 AbstractCoordinator.this.wait(retryBackoffMs)
                                             AbstractCoordinator.this.notify();
                                         }
                                     }

@@ -209,10 +209,19 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
      */
     @Override
     public void connect(String id, InetSocketAddress address, int sendBufferSize, int receiveBufferSize) throws IOException {
+        // 校验与该节点的连接状态,如果为以下两种状态则抛出异常
+        // 1:已连接
+        // 2:正在关闭
         ensureNotRegistered(id);
         SocketChannel socketChannel = SocketChannel.open();
         try {
+            // socket设置
+            // keepAlive = true
+            // tcpNoDelay = true
+            // 发送缓冲区大小 默认128KB
+            // 接收缓冲区大小 默认64KB
             configureSocketChannel(socketChannel, sendBufferSize, receiveBufferSize);
+            // 建立连接 并且将通道注册到selector
             boolean connected = doConnect(socketChannel, address);
             SelectionKey key = registerChannel(id, socketChannel, SelectionKey.OP_CONNECT);
 
@@ -341,12 +350,15 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
      */
     public void send(org.apache.kafka.common.network.Send send) {
         String connectionId = send.destination();
+        // 获取要发送的节点的通道
         org.apache.kafka.common.network.KafkaChannel channel = openOrClosingChannelOrFail(connectionId);
+        // 如果要发送的节点的连接正处于关闭状态  则不发送
         if (closingChannels.containsKey(connectionId)) {
             // ensure notification via `disconnected`, leave channel in the state in which closing was triggered
             this.failedSends.add(connectionId);
         } else {
             try {
+                // 将请求入队  实际发送是在poll方法中
                 channel.setSend(send);
             } catch (Exception e) {
                 // update the state for consistency, the channel will be discarded after `close`
@@ -400,7 +412,6 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
 
         boolean madeReadProgressLastCall = madeReadProgressLastPoll;
         clear();
-
         boolean dataInBuffers = !keysWithBufferedRead.isEmpty();
 
         if (hasStagedReceives() || !immediatelyConnectedKeys.isEmpty() || (madeReadProgressLastCall && dataInBuffers))
@@ -425,7 +436,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
 
         if (numReadyKeys > 0 || !immediatelyConnectedKeys.isEmpty() || dataInBuffers) {
             Set<SelectionKey> readyKeys = this.nioSelector.selectedKeys();
-
+            // 加密传输的处理逻辑
             // Poll from channels that have buffered data (but nothing more from the underlying socket)
             if (dataInBuffers) {
                 keysWithBufferedRead.removeAll(readyKeys); //so no channel gets polled twice
@@ -435,10 +446,12 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
             }
 
             // Poll from channels where the underlying socket has more data
+            // 处理IO (读、写、连接事件)
             pollSelectionKeys(readyKeys, false, endSelect);
             // Clear all selected keys so that they are included in the ready count for the next select
+            // 处理完清理SelectionKey
             readyKeys.clear();
-            // 在这个方法中生产者会将数据发送给kafka
+            // 处理IO (读、写、连接事件)
             pollSelectionKeys(immediatelyConnectedKeys, true, endSelect);
             immediatelyConnectedKeys.clear();
         } else {
@@ -454,6 +467,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
 
         // Add to completedReceives after closing expired connections to avoid removing
         // channels with completed receives until all staged receives are completed.
+        // 将stagedReceives中的数据转移到completedReceives中
         addToCompletedReceives();
     }
 
@@ -468,6 +482,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
                            boolean isImmediatelyConnected,
                            long currentTimeNanos) {
         for (SelectionKey key : determineHandlingOrder(selectionKeys)) {
+            // 获取SelectionKey对应的channel
             org.apache.kafka.common.network.KafkaChannel channel = channel(key);
             long channelStartTimeNanos = recordTimePerConnection ? time.nanoseconds() : 0;
 
@@ -480,6 +495,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
             try {
 
                 /* complete any connections that have finished their handshake (either normally or immediately) */
+                // 如果是可连接事件  finishConnect方法中会去完成连接 并且在监听读写事件
                 if (isImmediatelyConnected || key.isConnectable()) {
                     if (channel.finishConnect()) {
                         this.connected.add(channel.id());
@@ -495,6 +511,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
                 }
 
                 /* if channel is not ready finish prepare */
+                // 对于文本传输类型 channel.ready()恒为true，此处是针对加密传输设定
                 if (channel.isConnected() && !channel.ready()) {
                     try {
                         channel.prepare();
@@ -505,9 +522,12 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
                     if (channel.ready())
                         sensors.successfulAuthentication.record();
                 }
-
+                // 如果是可读事件，并且对应的channel的stagedReceives中没有存放数据
+                // 那么就会将数据读取到channel的stagedReceives中，也就是说如果上一轮的读取到的数据还在stagedReceives(表示尚未处理)中
+                // 那么就不会再去处理，而是等数据处理完(处理完后会清空这个stagedReceives队列的数据)才会再去读取
                 attemptRead(key, channel);
-
+                // 使用文本传输此处恒为false(默认使用文本传输)，因为文本传输只要直接读写channal即可
+                // 而如果使用ssl加密传输，则在读写数据时都需要加密，所以额外需要维护一个缓冲区
                 if (channel.hasBytesBuffered()) {
                     //this channel has bytes enqueued in intermediary buffers that we could not read
                     //(possibly because no memory). it may be the case that the underlying socket will
@@ -519,6 +539,7 @@ public class Selector implements org.apache.kafka.common.network.Selectable, Aut
                 }
 
                 /* if channel is ready write to any sockets that have space in their buffer and for which we have data */
+                // 如果是可写事件，那么就将数据写入通道 并且将写入的数据记录到completedSends列表中
                 if (channel.ready() && key.isWritable()) {
                     org.apache.kafka.common.network.Send send = null;
                     try {

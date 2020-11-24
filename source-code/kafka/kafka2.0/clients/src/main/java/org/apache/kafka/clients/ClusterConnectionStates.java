@@ -16,12 +16,11 @@
  */
 package org.apache.kafka.clients;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 import org.apache.kafka.common.errors.AuthenticationException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * The state of our connection to each node in the cluster.
@@ -177,7 +176,7 @@ final class ClusterConnectionStates {
      */
     public void checkingApiVersions(String id) {
         NodeConnectionState nodeState = nodeState(id);
-        nodeState.state = ConnectionState.CHECKING_API_VERSIONS;
+        nodeState.state = org.apache.kafka.clients.ConnectionState.CHECKING_API_VERSIONS;
     }
 
     /**
@@ -186,7 +185,7 @@ final class ClusterConnectionStates {
      */
     public void ready(String id) {
         NodeConnectionState nodeState = nodeState(id);
-        nodeState.state = ConnectionState.READY;
+        nodeState.state = org.apache.kafka.clients.ConnectionState.READY;
         nodeState.authenticationException = null;
         resetReconnectBackoff(nodeState);
     }
@@ -200,7 +199,7 @@ final class ClusterConnectionStates {
     public void authenticationFailed(String id, long now, AuthenticationException exception) {
         NodeConnectionState nodeState = nodeState(id);
         nodeState.authenticationException = exception;
-        nodeState.state = ConnectionState.AUTHENTICATION_FAILED;
+        nodeState.state = org.apache.kafka.clients.ConnectionState.AUTHENTICATION_FAILED;
         nodeState.lastConnectAttemptMs = now;
         updateReconnectBackoff(nodeState);
     }
@@ -216,7 +215,7 @@ final class ClusterConnectionStates {
     }
 
     private boolean isReady(NodeConnectionState state, long now) {
-        return state != null && state.state == ConnectionState.READY && state.throttleUntilTimeMs <= now;
+        return state != null && state.state == org.apache.kafka.clients.ConnectionState.READY && state.throttleUntilTimeMs <= now;
     }
 
     /**
@@ -327,7 +326,7 @@ final class ClusterConnectionStates {
      */
     private static class NodeConnectionState {
 
-        ConnectionState state;
+        org.apache.kafka.clients.ConnectionState state;
         AuthenticationException authenticationException;
         long lastConnectAttemptMs;
         long failedAttempts;

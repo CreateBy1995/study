@@ -207,9 +207,12 @@ public final class Metadata implements Closeable {
      * @param topics
      */
     public synchronized void setTopics(Collection<String> topics) {
+        // 如果这个topic原先没有订阅，则将needUpdate置为true，在poll方法中会去请求该topic的元数据信息
         if (!this.topics.keySet().containsAll(topics)) {
             requestUpdateForNewTopics();
         }
+        // 重新设置topics信息 topics是一个map对象，key表示topic，value固定为-1
+        // value只是用于topics.put(topic, TOPIC_EXPIRY_NEEDS_UPDATE)如果返回null，则表示尚未记录过该topic的信息，需要拉取该topic的元数据
         this.topics.clear();
         for (String topic : topics)
             this.topics.put(topic, TOPIC_EXPIRY_NEEDS_UPDATE);

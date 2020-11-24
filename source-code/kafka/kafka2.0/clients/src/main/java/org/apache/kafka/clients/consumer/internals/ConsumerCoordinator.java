@@ -302,19 +302,23 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
         final long startTime = time.milliseconds();
         long currentTime = startTime;
         long elapsed = 0L;
-        // 由于提交偏移量的方法是异步的， 所以此处先执行提交偏移量后的回调
+        // 如果之前有使用异步提交，则在此处完成异步提交的回调
         invokeCompletedOffsetCommitCallbacks();
         // 是否自动分配分区  用户也可以自定义分区分配
         if (subscriptions.partitionsAutoAssigned()) {
-            // Always update the heartbeat last poll time so that the heartbeat thread does not leave the
-            // group proactively due to application inactivity even if (say) the coordinator cannot be found.
+            // 如果心跳线程已经启动了 则更新心跳线程的lastPoll
+            // 心跳线程在与组协调器确立连接之后就会开启，但是需要等到加入群组之后，才会开始发送心跳包
+            // 在心跳线程中如果lastPoll和当前时间差超过max.poll.ms 则会导致消费者离开群组,具体流程参见心跳线程解析
             pollHeartbeat(currentTime);
-            // 如果群组协调器为空，则发送请求到broker获取群组对应的协调器，协调器用于管理分区的分配已经消费的偏移量等
-            // 不同的消费组有不同的群组协调器 每个kafka服务端在启动的时候会创建一个GroupCoordinator实例
-            // 此处会去寻找集群中当前最少未完成请求的节点(比如当前有5个broker，前4个broker还有4个请求未处理完,而第5个broker只有2个未处理完的请求,
-            // 那么就会选择第5个broker发送，未处理完的请求为 比如消费者向broker发起一个拉取消息的请求，broker还未响应，这个请求就是未处理完的请求),
-            // 并且将消费组id发送给该节点，获取对应的群组协调器
+            // 如果群组协调器coordinator为空，或者说与coordinator的连接处于未连接或者身份验证失败的状态
+            // DISCONNECTED: 未连接
+            // CONNECTING: 正在连接
+            // CHECKING_API_VERSIONS: 连接已经建立 并且正在验证API版本
+            // READY: 连接就绪，可以发送请求
+            // AUTHENTICATION_FAILED: 身份校验失败(比如配置了账号密码)
             if (coordinatorUnknown()) {
+                // 1.发送寻找组协调器的请求
+                // 2.在收到响应后建与组协调器的连接
                 if (!ensureCoordinatorReady(remainingTimeAtLeastZero(timeoutMs, elapsed))) {
                     return false;
                 }
@@ -322,7 +326,9 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
                 elapsed = currentTime - startTime;
             }
             // 是否需要重新发起rejoin请求
-            // 如果订阅的topic发生变化 或者 原先分配的分区数发生了变化就需要发起rejoin请求
+            // 1.如果订阅的topic发生变化
+            // 2.原先分配的分区数发生了变化就需要发起rejoin请求
+            // 3.第一次执行的时候
             if (rejoinNeededOrPending()) {
                 // due to a race condition between the initial metadata fetch and the initial rebalance,
                 // we need to ensure that the metadata is fresh before joining initially. This ensures
@@ -344,7 +350,7 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
                     currentTime = time.milliseconds();
                     elapsed = currentTime - startTime;
                 }
-
+                // 确定群组
                 if (!ensureActiveGroup(remainingTimeAtLeastZero(timeoutMs, elapsed))) {
                     return false;
                 }
@@ -469,10 +475,10 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
 
     @Override
     protected void onJoinPrepare(int generation, String memberId) {
-        // commit offsets prior to rebalance if auto-commit enabled
+        // 如果开启了自动提交偏移量，那么在rebalance之前会先发送一个同步提交偏移量的请求
         maybeAutoCommitOffsetsSync(rebalanceTimeoutMs);
 
-        // execute the user's callback before rebalance
+        // 执行rebalance前的回调函数 该回调函数的入参需要被撤销的分区，也就是已经分配给该消费者的分区
         ConsumerRebalanceListener listener = subscriptions.rebalanceListener();
         log.info("Revoking previously assigned partitions {}", subscriptions.assignedPartitions());
         try {
@@ -483,8 +489,10 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
         } catch (Exception e) {
             log.error("User provided listener {} failed on partition revocation", listener.getClass().getName(), e);
         }
-
+        // isLeader表示是否为该组的领导者，初始化时每个消费者的isLeader都为false
+        // 第一个加入群组的消费者则为该群组的领导者，可以给其他消费者分配分区
         isLeader = false;
+        // 清除掉消费组订阅的所有topic
         subscriptions.resetGroupSubscription();
     }
 
@@ -677,6 +685,7 @@ public final class ConsumerCoordinator extends org.apache.kafka.clients.consumer
      *         the coordinator
      */
     public boolean commitOffsetsSync(Map<TopicPartition, OffsetAndMetadata> offsets, long timeoutMs) {
+        // 执行之前通过异步提交返回的回调
         invokeCompletedOffsetCommitCallbacks();
 
         if (offsets.isEmpty())
