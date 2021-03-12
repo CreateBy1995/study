@@ -3,6 +3,7 @@ package study.sunshine.dubbo.provider.impl;
 import org.apache.dubbo.config.annotation.Method;
 import org.apache.dubbo.config.annotation.Service;
 import study.sunshine.dubbo.commonapi.api.DemoApi;
+import study.sunshine.dubbo.commonapi.dto.TestDTO;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -15,9 +16,10 @@ import java.util.concurrent.TimeUnit;
  * //
  **/
 @Service(version = "1.0", executes = 2, retries = 3,actives = 3,
+        validation = "true",
         timeout = 5000,
         methods = {
-        @Method(name = "getMessage", retries = 2,actives = 1)})
+        @Method(name = "getMessage", retries = 2,actives = 1, timeout = 876)})
 public class DemoApiImpl implements DemoApi {
     @Override
     public String getMessage(String msg) {
@@ -45,6 +47,11 @@ public class DemoApiImpl implements DemoApi {
         System.out.println("test");
     }
 
+    @Override
+    public String testDTO(TestDTO testDTO) {
+        System.out.println(testDTO.getSex());
+        return testDTO.toString();
+    }
     @Override
     public String getAsyncResult() {
         return "AsyncResult";

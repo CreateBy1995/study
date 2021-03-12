@@ -2,6 +2,7 @@ package study.sunshine.dubbo.provider.impl;
 
 import org.apache.dubbo.config.annotation.Service;
 import study.sunshine.dubbo.commonapi.api.DemoApi;
+import study.sunshine.dubbo.commonapi.dto.TestDTO;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,6 +36,16 @@ public class DemoApiImpl implements DemoApi {
 
     }
 
+    @Override
+    public String testDTO(TestDTO testDTO) {
+        Integer age = testDTO.getSex();
+        System.out.println(age);
+        return testDTO.toString();
+    }
+//    @Override
+//    public String testDTO() {
+//        return "sss";
+//    }
     @Override
     public String getAsyncResult() {
         return null;

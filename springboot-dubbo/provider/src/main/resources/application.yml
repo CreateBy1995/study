@@ -25,6 +25,8 @@ dubbo:
       name: dubbo
       port: 17002
       threads: 20
+  provider:
+    tag: abc
 #    rest:
 #      name: rest
 #      port: 27002

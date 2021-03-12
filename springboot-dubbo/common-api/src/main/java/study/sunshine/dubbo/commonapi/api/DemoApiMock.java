@@ -1,5 +1,7 @@
 package study.sunshine.dubbo.commonapi.api;
 
+import study.sunshine.dubbo.commonapi.dto.TestDTO;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,6 +24,17 @@ public class DemoApiMock implements DemoApi {
     @Override
     public void test() {
         System.out.println("test mock");
+    }
+
+//    @Override
+//    public String testDTO(@NotNull TestDTO2 testDTO) {
+//        return null;
+//    }
+
+//
+    @Override
+    public String testDTO(TestDTO testDTO) {
+        return null;
     }
 
     @Override

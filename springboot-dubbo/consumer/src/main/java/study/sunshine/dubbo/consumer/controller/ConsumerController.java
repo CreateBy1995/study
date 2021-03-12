@@ -6,11 +6,11 @@ import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.config.annotation.Method;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.rpc.service.GenericService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import study.sunshine.dubbo.commonapi.api.DemoApi;
-import study.sunshine.dubbo.commonapi.api.ProviderApi;
 
 /**
  * @Author: dongcx
@@ -22,17 +22,32 @@ import study.sunshine.dubbo.commonapi.api.ProviderApi;
 public class ConsumerController {
     //    @Reference(version = "1.0",retries = 1,mock = "study.sunshine.dubbo.consumer.mock.DemoApiMock")
     @Reference(version = "1.0", retries = 0,
-            timeout = 1000,
+            timeout = 998,
             mock = "default", methods = {
-            @Method(name = "getMessage",actives = 3,retries = 0),
+            @Method(name = "getMessage",actives = 3,retries = 0, timeout = 553),
             @Method(name = "getAsyncResult",async = true),
             @Method(name = "getAsyncResultWithFuture",async = true)
     }
     )
-
     private DemoApi demoApi;
-    @Reference(version = "2.0", group = "sunshineGroup")
-    private ProviderApi providerApi;
+    @Reference(version = "1.0", retries = 0,
+            timeout = 998,
+            mock = "default", methods = {
+            @Method(name = "getMessage",actives = 3,retries = 0, timeout = 553),
+            @Method(name = "getAsyncResult",async = true),
+            @Method(name = "getAsyncResultWithFuture",async = true)
+    }
+    )
+    private DemoApi demoApi2;
+//    @Reference(version = "2.0", group = "sunshineGroup")
+//    private ProviderApi providerApi;
+    @Autowired
+    private BeanB b;
+
+    @GetMapping("/test1")
+    public void test1(){
+        b.sayHello();
+    }
 
     @GetMapping("/getMessage")
     public String getMessage(String msg) {
@@ -53,21 +68,27 @@ public class ConsumerController {
 //                demoApi.getMessage(msg);
 //            }).start();
 //        }
-        demoApi.test();
+//        demoApi.test();
         return"ss";
 //        return  demoApi.getMessage(msg);
 //        return demoApi.getMessage(msg);
     }
 
-    @GetMapping("/getVersion1")
-    public String getVersion1() {
-        return providerApi.getVersion("1");
-    }
-
-    @GetMapping("/getVersion2")
-    public String getVersion2() {
-        return providerApi.getVersion("2", "3");
-    }
+//    @GetMapping("/getDTO")
+//    public String getDTO() {
+////        TestDTO1 testDTO1 =  new TestDTO1("a",1);
+//        TestDTO testDTO = new TestDTO("a",1);
+//        return demoApi.testDTO(testDTO);
+//    }
+//    @GetMapping("/getVersion1")
+//    public String getVersion1() {
+//        return providerApi.getVersion("1");
+//    }
+//
+//    @GetMapping("/getVersion2")
+//    public String getVersion2() {
+//        return providerApi.getVersion("2", "3");
+//    }
 
     /**
      * 测试泛化调用

@@ -1,15 +1,16 @@
 package study.sunshine.mybatis.bean;
 
-import org.springframework.stereotype.Component;
+import lombok.Data;
 
 /**
  * @Author: dongcx
  * @Description:
  * @Date: 2020-11-10
  **/
-@Component
+@Data
 public class BeanA {
     public BeanA(){
-        System.out.println("beanA");
+        System.out.println("bbbb");
     }
+    private String name;
 }
